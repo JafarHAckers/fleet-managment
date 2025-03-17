@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  # PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleet_app
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - fleet-network
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: fleet_webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - fleet-network
+
+  # MySQL Service
+  db:
+    image: mysql:8.0
+    container_name: fleet_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - fleet-network
+
+# Docker Networks
+networks:
+  fleet-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  dbdata:
+    driver: local
